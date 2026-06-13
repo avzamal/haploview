@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "haploview"
+version = "0.1.0"
+description = "Modern reimplementation of the Haploview LD / haplotype-block analysis tool with VCF and HapMap support"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "haploview-py contributors" }]
+dependencies = ["numpy>=1.21"]
+
+[project.optional-dependencies]
+test = ["pytest>=7.0"]
+
+[project.scripts]
+haploview = "haploview.cli:main"
+
+[tool.setuptools]
+packages = ["haploview", "haploview.io", "haploview.writers"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

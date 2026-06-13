@@ -1,0 +1,19 @@
+__pycache__/
+*.pyc
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.venv/
+venv/
+
+# Original tool jar and large/derived parity artifacts (fetched on demand)
+third_party/*.jar
+data/chr01_subset.vcf
+parity_out/
+*.LD
+*.GABRIELblocks
+*.4GAMblocks
+*.SPINEblocks
+*.HAPS
