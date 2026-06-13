@@ -72,3 +72,51 @@ def test_parity_on_sample(tmp_path):
     my_blocks = [[result.dataset.markers[m].name for m in b]
                  for b in result.blocks]
     assert hv_blocks == my_blocks
+
+
+def _hv_capture_partition(tags_file):
+    """Parse the 'Test -> Alleles Captured' section into a set of frozensets."""
+    groups = []
+    in_section = False
+    for line in open(tags_file):
+        if line.startswith("Test\t"):
+            in_section = True
+            continue
+        if in_section and line.strip():
+            parts = line.rstrip("\n").split("\t")
+            if len(parts) >= 2:
+                groups.append(frozenset(parts[1].split(",")))
+    return set(groups)
+
+
+def test_tag_parity_on_sample(tmp_path):
+    from haploview.pipeline import run_analysis
+
+    hv_out = str(tmp_path / "hvtag")
+    subprocess.run(
+        ["java", "-Djava.awt.headless=true", "-jar", JAR, "-n",
+         "-pedfile", os.path.join(DATA, "sample.ped"),
+         "-info", os.path.join(DATA, "sample.info"),
+         "-pairwiseTagging", "-tagrSqCutoff", "0.8", "-maxdistance", "500",
+         "-out", hv_out],
+        check=True, cwd=str(tmp_path), capture_output=True)
+
+    result = run_analysis(os.path.join(DATA, "sample.vcf"), method="gabriel",
+                          max_distance_kb=500, tag=True, tag_rsq=0.8)
+    tags = result.tags
+    names = lambda idxs: frozenset(result.dataset.markers[i].name for i in idxs)
+
+    # mine: partition SNPs by their best tag
+    from collections import defaultdict
+    mine_groups = defaultdict(set)
+    for snp, tag in tags.best_tag.items():
+        mine_groups[tag].add(snp)
+    mine_partition = {names(g) for g in mine_groups.values()}
+
+    hv_partition = _hv_capture_partition(hv_out + ".TAGS")
+
+    # same number of tags and identical capture partition (tag representative may
+    # differ for perfect-LD groups, but the grouping must match)
+    assert len(tags.tags) == len(hv_partition)
+    assert mine_partition == hv_partition
+    assert tags.untagged == []

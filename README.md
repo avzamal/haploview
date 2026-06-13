@@ -54,6 +54,28 @@ Outputs written under the `-o` prefix:
 | `<prefix>.blocks.vcf` | **new** multiallelic VCF, one record per haploblock |
 | `<prefix>.blocks.csv` | **new** one row per (block, SNP) membership |
 | `<prefix>.block_haplotypes.csv` | per-block haplotype frequencies |
+| `<prefix>.tagsnps.vcf` | **new** input VCF subset to just the tag SNPs |
+| `<prefix>.tags.csv` | **new** per-SNP: its block, best tag, r², and whether it is a tag |
+| `<prefix>.tags_summary.csv` | **new** per-tag: the SNPs (and blocks) it captures |
+
+### Tag SNPs
+
+A **tag SNP** is a marker chosen so that genotyping it captures other markers it
+is in strong LD with: Haploview's Tagger greedily picks a minimal set of SNPs
+such that every SNP is either a tag or has **r² ≥ 0.8** (default, within 500 kb)
+with a chosen tag (de Bakker *et al.*, *Nat Genet* 2005). Each captured SNP is
+assigned its *best tag* (the chosen tag it correlates with most strongly).
+
+This tool runs the pairwise Tagger by default (disable with `--no-tag`, change
+the cutoff with `--tag-rsq`) and writes the tag-SNP subset VCF plus the
+correspondence CSVs, which annotate every tag/captured SNP with its haploblock.
+
+The greedy selection is a transcription of `edu/mit/wi/tagger/Tagger.java`
+(pairwise mode). Because the original breaks ties among equally good candidate
+tags using hash-map order (not reproducible), this tool breaks them
+deterministically; the resulting tag set is an equivalent valid cover. On the
+real 300-marker subset below, 112 of 117 capture groups are identical to the
+original, both capture 100% of SNPs, and mean r² matches (0.96 vs 0.956).
 
 ### Block methods and key thresholds
 

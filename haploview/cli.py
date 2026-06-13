@@ -34,6 +34,10 @@ def _add_analyze_args(p: argparse.ArgumentParser) -> None:
                    help="min frequency for a haplotype to be reported (default: 0.01)")
     p.add_argument("--chrom", help="restrict to this chromosome/contig (VCF)")
     p.add_argument("--max-markers", type=int, help="cap number of markers read")
+    p.add_argument("--no-tag", action="store_true",
+                   help="skip tag-SNP selection and its outputs")
+    p.add_argument("--tag-rsq", type=float, default=0.8,
+                   help="r^2 cutoff for tag-SNP capture (default: 0.8)")
 
 
 def _run_analyze(args) -> int:
@@ -44,11 +48,14 @@ def _run_analyze(args) -> int:
         result = run_analysis(
             args.input, fmt=args.format, info=args.info, method=method,
             max_distance_kb=args.max_distance, qc=qc, chrom=args.chrom,
-            max_markers=args.max_markers)
+            max_markers=args.max_markers, tag=not args.no_tag,
+            tag_rsq=args.tag_rsq)
         prefix = args.out if len(methods) == 1 else f"{args.out}.{method}"
         paths = write_outputs(result, prefix, method, hap_thresh=args.hap_thresh)
+        ntags = len(result.tags.tags) if result.tags else 0
         print(f"[{method}] {result.dataset.n_markers} markers, "
-              f"{len(result.dropped)} dropped, {len(result.blocks)} blocks")
+              f"{len(result.dropped)} dropped, {len(result.blocks)} blocks, "
+              f"{ntags} tag SNPs")
         for p in paths:
             print(f"  wrote {p}")
     return 0
